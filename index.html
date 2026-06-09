@@ -359,6 +359,7 @@
 
         .checklist-options {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
         }
 
@@ -779,7 +780,7 @@
 
             <!-- ROOM CONDITION -->
             <div class="form-section">
-                <h3>🔍 Zimmer & Reinigung</h3>
+                <h3>📋 Checkliste</h3>
                 <div id="checklistItems"></div>
                 <div id="fotosSection" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;"></div>
             </div>
@@ -1078,21 +1079,24 @@
         }
 
         // Generate checklist
+        const ZUSTAND = ['Neu', 'Gebraucht', 'Abgenutzt', 'Beschädigt', 'Defekt'];
         const checklistItems = [
-            { label: 'Wände', id: 'waende' },
-            { label: 'Decke', id: 'decke' },
-            { label: 'Fußboden', id: 'fussboden' },
-            { label: 'Kleiderschrank', id: 'kleiderschrank' },
-            { label: 'Beleuchtung', id: 'beleuchtung' },
-            { label: 'Steckdosen', id: 'steckdosen' },
-            { label: 'Rauchmelder', id: 'rauchmelder' },
-            { label: 'Bett', id: 'bett' },
-            { label: 'Tisch', id: 'tisch' },
-            { label: 'Stuhl', id: 'stuhl' },
-            { label: 'Kühlschrank', id: 'kuehlschrank' },
-            { label: 'Fenster', id: 'fenster' },
-            { label: 'Jalousien oder Gardinen', id: 'jalousien' },
-            { label: 'Sauberkeit / Allgemeinzustand', id: 'sauberkeit' }
+            { label: 'Wände', id: 'waende', options: ZUSTAND },
+            { label: 'Decke', id: 'decke', options: ZUSTAND },
+            { label: 'Fußboden', id: 'fussboden', options: ZUSTAND },
+            { label: 'Tür', id: 'tuer', options: ZUSTAND },
+            { label: 'Kleiderschrank', id: 'kleiderschrank', options: ZUSTAND },
+            { label: 'Beleuchtung', id: 'beleuchtung', options: ZUSTAND },
+            { label: 'Steckdosen', id: 'steckdosen', options: ZUSTAND },
+            { label: 'Rauchmelder', id: 'rauchmelder', options: ZUSTAND },
+            { label: 'Bett', id: 'bett', options: ZUSTAND },
+            { label: 'Tisch', id: 'tisch', options: ZUSTAND },
+            { label: 'Stuhl', id: 'stuhl', options: ZUSTAND },
+            { label: 'Kühlschrank', id: 'kuehlschrank', options: ZUSTAND },
+            { label: 'Fenster', id: 'fenster', options: ZUSTAND },
+            { label: 'Jalousien oder Gardinen', id: 'jalousien', options: ZUSTAND },
+            { label: 'Sauberkeit', id: 'sauberkeit', options: ZUSTAND },
+            { label: 'Schimmel', id: 'schimmel', options: ['Ja', 'Nein'] }
         ];
 
         const checklistContainer = document.getElementById('checklistItems');
@@ -1102,27 +1106,20 @@
             const itemDiv = document.createElement('div');
             itemDiv.className = 'checklist-item';
             itemDiv.style.display = 'block';
+            const optionsHtml = item.options.map(opt => `
+                    <div class="radio-btn">
+                        <input type="radio" id="${item.id}_${opt}" name="${item.id}" value="${opt}" class="checklist-radio" onchange="updateFotoSection()">
+                        <label for="${item.id}_${opt}">${opt}</label>
+                    </div>`).join('');
             itemDiv.innerHTML = `
                 <div class="checklist-label">${item.label}</div>
-                <div class="checklist-options" style="margin-bottom: 10px;">
-                    <div class="radio-btn">
-                        <input type="radio" id="${item.id}_gut" name="${item.id}" value="Gut" onchange="updateFotoSection()">
-                        <label for="${item.id}_gut">Gut</label>
-                    </div>
-                    <div class="radio-btn">
-                        <input type="radio" id="${item.id}_ok" name="${item.id}" value="OK" onchange="updateFotoSection()">
-                        <label for="${item.id}_ok">OK</label>
-                    </div>
-                    <div class="radio-btn">
-                        <input type="radio" id="${item.id}_mangel" name="${item.id}" value="Mangel" onchange="updateFotoSection()">
-                        <label for="${item.id}_mangel">Mangel</label>
-                    </div>
+                <div class="checklist-options" style="margin-bottom: 10px;">${optionsHtml}
                 </div>
                 <div id="foto_${item.id}" style="display: none; background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 10px;">
-                    <label style="font-size: 12px; font-weight: 600; color: #666; display: block; margin-bottom: 8px;">📸 Fotos des Mangels</label>
+                    <label style="font-size: 12px; font-weight: 600; color: #666; display: block; margin-bottom: 8px;">📸 Fotos</label>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <button type="button" class="btn btn-secondary" style="padding: 8px 16px; width: auto;" onclick="document.getElementById('fotoInput_${item.id}').click()">📤 Upload</button>
-                        <button type="button" class="btn btn-secondary" style="padding: 8px 16px; width: auto;" onclick="startWebcam('${item.id}')">🎥 Webcam</button>
+                        <button type="button" class="btn btn-secondary" style="padding: 8px 16px; width: auto;" onclick="startWebcam('${item.id}')">📷 Kamera</button>
                     </div>
                     <input type="file" accept="image/*" id="fotoInput_${item.id}" class="foto-input" data-item="${item.id}" style="display: none;" multiple>
                     <div id="fotoPreview_${item.id}" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px;"></div>
@@ -1138,17 +1135,14 @@
     }
 
     function updateFotoSection() {
-        const checklistItems = ['waende', 'decke', 'fussboden', 'kleiderschrank', 'beleuchtung', 'steckdosen', 'rauchmelder', 'bett', 'tisch', 'stuhl', 'kuehlschrank', 'fenster', 'jalousien', 'sauberkeit'];
-        
-        checklistItems.forEach(item => {
-            const mangelRadio = document.getElementById(`${item}_mangel`);
-            const fotoSection = document.getElementById(`foto_${item}`);
-            
-            if (mangelRadio && mangelRadio.checked) {
-                fotoSection.style.display = 'block';
-            } else {
-                fotoSection.style.display = 'none';
-            }
+        const FOTO_TRIGGER = ['Beschädigt', 'Defekt', 'Ja'];
+
+        document.querySelectorAll('.checklist-item').forEach(itemDiv => {
+            const checked = itemDiv.querySelector('input[type="radio"]:checked');
+            const fotoSection = itemDiv.querySelector('[id^="foto_"]');
+            if (!fotoSection) return;
+
+            fotoSection.style.display = (checked && FOTO_TRIGGER.includes(checked.value)) ? 'block' : 'none';
         });
     }
 
@@ -1487,10 +1481,8 @@
     // ============= PDF GENERATION =============
     function generatePDF() {
         const checklist = {};
-        document.querySelectorAll('[name^="waende"], [name^="decke"], [name^="fussboden"], [name^="kleiderschrank"], [name^="beleuchtung"], [name^="steckdosen"], [name^="rauchmelder"], [name^="bett"], [name^="tisch"], [name^="stuhl"], [name^="kuehlschrank"], [name^="fenster"], [name^="jalousien"], [name^="sauberkeit"]').forEach(input => {
-            if (input.checked) {
-                checklist[input.name] = input.value;
-            }
+        document.querySelectorAll('.checklist-radio:checked').forEach(input => {
+            checklist[input.name] = input.value;
         });
 
         const protocolType = document.querySelector('input[name="protocolType"]:checked')?.value || 'Protokoll';
@@ -1598,30 +1590,31 @@
                 pdf.setFont(undefined, 'normal');
                 pdf.setTextColor(0, 0, 0);
                 
+                // Wert → Farbe (Grün = unkritisch, Gelb = Achtung, Rot = Problem)
+                const STATUS_COLORS = {
+                    'Neu':        { border: [76, 175, 80],  fill: [232, 245, 233], text: [46, 125, 50] },
+                    'Gebraucht':  { border: [76, 175, 80],  fill: [232, 245, 233], text: [46, 125, 50] },
+                    'Nein':       { border: [76, 175, 80],  fill: [232, 245, 233], text: [46, 125, 50] },
+                    'Abgenutzt':  { border: [255, 193, 7],  fill: [255, 243, 224], text: [230, 81, 0] },
+                    'Beschädigt': { border: [244, 67, 54],  fill: [255, 235, 238], text: [198, 40, 40] },
+                    'Defekt':     { border: [244, 67, 54],  fill: [255, 235, 238], text: [198, 40, 40] },
+                    'Ja':         { border: [244, 67, 54],  fill: [255, 235, 238], text: [198, 40, 40] }
+                };
+
                 Object.entries(protocol.checklist).forEach(([key, value]) => {
                     const label = key.replace(/_/g, ' ').charAt(0).toUpperCase() + key.replace(/_/g, ' ').slice(1);
-                    
-                    // Status-Farbe
-                    let statusColor = '#4CAF50'; // Grün
-                    if (value === 'OK') statusColor = '#FFC107'; // Orange
-                    if (value === 'Mangel') statusColor = '#F44336'; // Rot
-                    
+                    const c = STATUS_COLORS[value] || STATUS_COLORS['Neu'];
+
                     // Text
                     pdf.text(label, margin, yPos);
                     pdf.setTextColor(0, 0, 0);
-                    
+
                     // Status rechts
-                    pdf.setDrawColor(statusColor === '#4CAF50' ? 76 : statusColor === '#FFC107' ? 255 : 244, 
-                                    statusColor === '#4CAF50' ? 175 : statusColor === '#FFC107' ? 193 : 67,
-                                    statusColor === '#4CAF50' ? 80 : statusColor === '#FFC107' ? 0 : 54);
-                    pdf.setFillColor(statusColor === '#4CAF50' ? 232 : statusColor === '#FFC107' ? 255 : 255,
-                                    statusColor === '#4CAF50' ? 245 : statusColor === '#FFC107' ? 243 : 235,
-                                    statusColor === '#4CAF50' ? 233 : statusColor === '#FFC107' ? 224 : 238);
+                    pdf.setDrawColor(...c.border);
+                    pdf.setFillColor(...c.fill);
                     pdf.rect(pageWidth - margin - 30, yPos - 2.5, 30, 5, 'F');
-                    
-                    pdf.setTextColor(statusColor === '#4CAF50' ? 46 : statusColor === '#FFC107' ? 230 : 198,
-                                    statusColor === '#4CAF50' ? 125 : statusColor === '#FFC107' ? 81 : 40,
-                                    statusColor === '#4CAF50' ? 50 : statusColor === '#FFC107' ? 0 : 40);
+
+                    pdf.setTextColor(...c.text);
                     pdf.setFont(undefined, 'bold');
                     pdf.text(value, pageWidth - margin - 15, yPos, { align: 'center' });
                     pdf.setTextColor(0, 0, 0);
