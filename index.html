@@ -2,7 +2,11 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ZiG Protokoll">
+    <meta name="theme-color" content="#C5D32A">
     <title>Übergabe-Protokoll | Zeit ist Geld GmbH</title>
     <link rel="icon" type="image/png" href="data:image/png;base64,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">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -110,7 +114,7 @@
             padding: 12px 16px;
             border: 2px solid #e0e0e0;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 16px;
             transition: all 0.3s ease;
             box-sizing: border-box;
             font-family: Arial, Helvetica, sans-serif;
@@ -196,7 +200,8 @@
             background: var(--zig-gray);
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 12px 20px;
+            min-height: 44px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
@@ -380,7 +385,7 @@
             padding: 10px;
             border: 2px solid #e0e0e0;
             border-radius: 4px;
-            font-size: 13px;
+            font-size: 16px;
             font-family: inherit;
             margin-top: 10px;
         }
@@ -426,7 +431,8 @@
         .sig-clear-btn {
             background: #f0f0f0;
             border: none;
-            padding: 8px 12px;
+            padding: 12px 16px;
+            min-height: 44px;
             border-radius: 4px;
             font-size: 12px;
             cursor: pointer;
@@ -587,6 +593,30 @@
             }
         }
 
+        /* ============= iPhone / Small Mobile ============= */
+        @media (max-width: 414px) {
+            .content { padding: 16px; }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+            .action-buttons { flex-direction: column; }
+            .btn { min-width: unset; }
+            .form-section { padding: 14px; }
+        }
+
+        /* ============= SAFE AREAS (Dynamic Island / Home Indicator) ============= */
+        .app-header {
+            padding-top: calc(15px + env(safe-area-inset-top));
+            padding-left: calc(30px + env(safe-area-inset-left));
+            padding-right: calc(30px + env(safe-area-inset-right));
+        }
+
+        .action-buttons {
+            padding-bottom: calc(15px + env(safe-area-inset-bottom));
+        }
+
+        /* ============= iOS SMOOTH SCROLL ============= */
+        body { -webkit-overflow-scrolling: touch; }
+        .modal-content { -webkit-overflow-scrolling: touch; }
+
         /* ============= LOADING ============= */
         .spinner {
             border: 4px solid #f0f0f0;
@@ -643,7 +673,8 @@
             background: var(--zig-green);
             color: var(--zig-dark);
             border: none;
-            padding: 6px 12px;
+            padding: 12px 16px;
+            min-height: 44px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
@@ -724,7 +755,7 @@
                 </div>
                 <div class="form-group">
                     <label>Mieter / Person auswählen</label>
-                    <select id="formTenant" style="width: 100%; padding: 12px 16px; border: 2px solid var(--zig-green); border-radius: 6px; font-size: 14px; box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; background: #ffffff; cursor: pointer;"></select>
+                    <select id="formTenant" style="width: 100%; padding: 12px 16px; border: 2px solid var(--zig-green); border-radius: 6px; font-size: 16px; box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; background: #ffffff; cursor: pointer;"></select>
                 </div>
             </div>
 
