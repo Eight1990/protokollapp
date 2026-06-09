@@ -726,10 +726,6 @@
                     <label>Mieter / Person auswählen</label>
                     <select id="formTenant" style="width: 100%; padding: 12px 16px; border: 2px solid var(--zig-green); border-radius: 6px; font-size: 14px; box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; background: #ffffff; cursor: pointer;"></select>
                 </div>
-                <div class="form-group" id="formTenantCustomWrap" style="display: none;">
-                    <label>Name der Person (neu, noch nicht in der Liste)</label>
-                    <input type="text" id="formTenantCustom" placeholder="Vor- und Nachname eingeben" style="width: 100%; padding: 12px 16px; border: 2px solid var(--zig-green); border-radius: 6px; font-size: 14px; box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; background: #ffffff;">
-                </div>
             </div>
 
             <!-- PROTOCOL TYPE -->
@@ -845,17 +841,6 @@
 
     function setupEventListeners() {
         document.getElementById('excelFile').addEventListener('change', handleExcelUpload);
-        document.getElementById('formTenant').addEventListener('change', updateTenantCustomVisibility);
-    }
-
-    // Freitextfeld fuer neue Person je nach Auswahl ein-/ausblenden
-    function updateTenantCustomVisibility() {
-        const sel = document.getElementById('formTenant');
-        const wrap = document.getElementById('formTenantCustomWrap');
-        if (!sel || !wrap) return;
-        const opt = sel.options[sel.selectedIndex];
-        const isFree = !!(opt && opt.dataset && opt.dataset.free === 'true');
-        wrap.style.display = isFree ? 'block' : 'none';
     }
 
     // ============= EXCEL HANDLING =============
@@ -931,8 +916,8 @@
                 continue;
             }
 
-            // Parse bed rows: bed number in col A; Bewohner optional -> freie Betten inklusive
-            if (currentRoom && isHeaderRow && row[0] && typeof row[0] === 'number') {
+            // Parse bed/tenant rows: has # in col A, name in col C
+            if (currentRoom && isHeaderRow && row[0] && typeof row[0] === 'number' && row[2]) {
                 // Convert date if necessary
                 let checkInDate = row[3] || '';
                 if (checkInDate instanceof Date) {
@@ -942,7 +927,7 @@
                 currentRoom.beds.push({
                     number: row[0],
                     type: row[1] || 'Bett',
-                    tenant: row[2] ? String(row[2]).trim() : '',
+                    tenant: String(row[2]).trim(),
                     checkInDate: checkInDate,
                     customer: row[4] || '',
                     rent: row[5] || '',
@@ -1043,36 +1028,23 @@
         document.getElementById('formHouse').value = appState.selectedHouse;
         document.getElementById('formRoom').value = room.name;
 
-        // Bewohner-Auswahl befuellen: alle Betten des Zimmers (auch freie) + Option fuer neue Person
+        // Bewohner-Auswahl befuellen: alle im Zimmer gemeldeten Personen als Optionen
         const tenantSelect = document.getElementById('formTenant');
         tenantSelect.innerHTML = '';
         if (room.beds && room.beds.length > 0) {
             room.beds.forEach((bed) => {
                 const option = document.createElement('option');
-                const isFree = !bed.tenant;
-                if (isFree) {
-                    option.value = '';
-                    option.textContent = `Bett ${bed.number}: (frei) \u2013 Namen eingeben`;
-                    option.dataset.free = 'true';
-                } else {
-                    option.value = bed.tenant;
-                    const statusInfo = bed.status ? ` \u2013 ${bed.status}` : '';
-                    option.textContent = `Bett ${bed.number}: ${bed.tenant}${statusInfo}`;
-                    option.dataset.free = 'false';
-                }
+                option.value = bed.tenant;
+                const statusInfo = bed.status ? ` \u2013 ${bed.status}` : '';
+                option.textContent = `Bett ${bed.number}: ${bed.tenant}${statusInfo}`;
                 tenantSelect.appendChild(option);
             });
+        } else {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = '(kein Bewohner hinterlegt)';
+            tenantSelect.appendChild(option);
         }
-        // Zusaetzliche Option: voellig neue Person (egal ob freies Bett oder nicht)
-        const customOption = document.createElement('option');
-        customOption.value = '';
-        customOption.textContent = '\u2795 Andere Person / neuer Name\u2026';
-        customOption.dataset.free = 'true';
-        tenantSelect.appendChild(customOption);
-
-        // Freitextfeld zuruecksetzen und passend zur aktuellen Auswahl ein-/ausblenden
-        document.getElementById('formTenantCustom').value = '';
-        updateTenantCustomVisibility();
 
         // Generate checklist
         const checklistItems = [
@@ -1497,25 +1469,11 @@
             return;
         }
 
-        // Mieter/Person bestimmen: bei freiem Bett oder "Andere Person" den eingegebenen Namen verwenden
-        const tenantSelectEl = document.getElementById('formTenant');
-        const selectedTenantOpt = tenantSelectEl.options[tenantSelectEl.selectedIndex];
-        const isFreeTenantSelection = !!(selectedTenantOpt && selectedTenantOpt.dataset && selectedTenantOpt.dataset.free === 'true');
-        const customTenantName = document.getElementById('formTenantCustom').value.trim();
-        let tenantName = tenantSelectEl.value;
-        if (isFreeTenantSelection) {
-            if (!customTenantName) {
-                showAlert('error', '❌ Bitte den Namen der Person eingeben (freies Bett / neue Person).', 'step4');
-                return;
-            }
-            tenantName = customTenantName;
-        }
-
         const protocol = {
             timestamp: new Date().toISOString(),
             house: document.getElementById('formHouse').value,
             room: document.getElementById('formRoom').value,
-            tenant: tenantName,
+            tenant: document.getElementById('formTenant').value,
             protocolType: protocolType,
             checklist: checklist,
             remarks: document.getElementById('remarks').value,
