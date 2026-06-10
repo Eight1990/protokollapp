@@ -757,6 +757,7 @@
                 <div class="form-group">
                     <label>Mieter / Person auswählen</label>
                     <select id="formTenant" style="width: 100%; padding: 12px 16px; border: 2px solid var(--zig-green); border-radius: 6px; font-size: 16px; box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; background: #ffffff; cursor: pointer;"></select>
+                    <input type="text" id="formTenantCustom" placeholder="Vor- und Nachname eingeben..." style="display:none; margin-top:10px; width:100%; padding:12px 16px; border:2px solid var(--zig-green); border-radius:6px; font-size:16px; box-sizing:border-box; font-family:Arial,Helvetica,sans-serif;">
                 </div>
             </div>
 
@@ -1077,6 +1078,22 @@
             option.textContent = '(kein Bewohner hinterlegt)';
             tenantSelect.appendChild(option);
         }
+
+        const sep = document.createElement('option');
+        sep.disabled = true;
+        sep.textContent = '──────────────';
+        tenantSelect.appendChild(sep);
+
+        const other = document.createElement('option');
+        other.value = '__other__';
+        other.textContent = '✏️ Andere Person...';
+        tenantSelect.appendChild(other);
+
+        tenantSelect.addEventListener('change', () => {
+            const customInput = document.getElementById('formTenantCustom');
+            customInput.style.display = tenantSelect.value === '__other__' ? 'block' : 'none';
+            if (tenantSelect.value === '__other__') customInput.focus();
+        });
 
         // Generate checklist
         const ZUSTAND = ['Neu', 'Gebraucht', 'Abgenutzt', 'Beschädigt', 'Defekt'];
@@ -1496,7 +1513,12 @@
             timestamp: new Date().toISOString(),
             house: document.getElementById('formHouse').value,
             room: document.getElementById('formRoom').value,
-            tenant: document.getElementById('formTenant').value,
+            tenant: (() => {
+                const sel = document.getElementById('formTenant');
+                return sel.value === '__other__'
+                    ? (document.getElementById('formTenantCustom').value.trim() || '(unbekannt)')
+                    : sel.value;
+            })(),
             protocolType: protocolType,
             checklist: checklist,
             remarks: document.getElementById('remarks').value,
