@@ -634,53 +634,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        .protocol-list {
-            list-style: none;
-        }
-
-        .protocol-item {
-            background: var(--zig-light);
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--zig-green);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .protocol-item:hover {
-            background: rgba(197, 211, 42, 0.1);
-        }
-
-        .protocol-item-info {
-            flex: 1;
-        }
-
-        .protocol-item-title {
-            font-weight: 700;
-            color: var(--zig-dark);
-            margin-bottom: 5px;
-        }
-
-        .protocol-item-date {
-            font-size: 12px;
-            color: #999;
-        }
-
-        .protocol-item-btn {
-            background: var(--zig-green);
-            color: var(--zig-dark);
-            border: none;
-            padding: 12px 16px;
-            min-height: 44px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-        }
     </style>
 </head>
 <body>
@@ -824,15 +777,6 @@
                 <button class="btn btn-primary" onclick="generatePDF()">📄 PDF Generieren & Speichern</button>
                 <button class="btn btn-danger" onclick="resetForm()">🔄 Neues Protokoll</button>
             </div>
-        </div>
-    </div>
-
-    <!-- STEP 5: SAVED PROTOCOLS -->
-    <div class="content" id="step5">
-        <div class="section-title">📚 Gespeicherte Protokolle</div>
-        <ul class="protocol-list" id="protocolList"></ul>
-        <div class="action-buttons">
-            <button class="btn btn-secondary" onclick="startNewProtocol()">← Neues Protokoll</button>
         </div>
     </div>
 </div>
@@ -1001,8 +945,6 @@
             populateProtocolForm();
             // Wichtig: Signatur-Canvas erst initialisieren, wenn DOM vollständig ist
             setTimeout(() => initializeSignaturePads(), 100);
-        } else if (step === 5) {
-            renderProtocols();
         }
     }
 
@@ -1372,30 +1314,6 @@
         webcamState = { video: null, canvas: null, stream: null, currentItemId: null };
     }
 
-    function renderProtocols() {
-        const list = document.getElementById('protocolList');
-        const protocols = JSON.parse(localStorage.getItem('protocols') || '[]');
-
-        if (protocols.length === 0) {
-            list.innerHTML = '<li style="text-align: center; padding: 30px; color: #999;">Noch keine Protokolle gespeichert</li>';
-            return;
-        }
-
-        list.innerHTML = '';
-        protocols.forEach((protocol, index) => {
-            const item = document.createElement('li');
-            item.className = 'protocol-item';
-            item.innerHTML = `
-                <div class="protocol-item-info">
-                    <div class="protocol-item-title">${protocol.house} - ${protocol.room}</div>
-                    <div class="protocol-item-date">${new Date(protocol.timestamp).toLocaleString('de-DE')}</div>
-                </div>
-                <button class="protocol-item-btn" onclick="downloadProtocol(${index})">📥 Herunterladen</button>
-            `;
-            list.appendChild(item);
-        });
-    }
-
     // ============= SIGNATURE LOGIC =============
     let signatureState = {
         pruefer: { isDrawing: false, canvas: null, ctx: null },
@@ -1527,23 +1445,8 @@
             fotos: appState.fotos || {}                     // Für PDF - in Memory
         };
 
-        // Speichere NUR Metadaten (ohne große Base64-Bilder) zur Speicheroptimierung
-        const protocolToStore = {
-            timestamp: protocol.timestamp,
-            house: protocol.house,
-            room: protocol.room,
-            tenant: protocol.tenant,
-            protocolType: protocol.protocolType,
-            checklist: protocol.checklist,
-            remarks: protocol.remarks
-        };
-
-        const protocols = JSON.parse(localStorage.getItem('protocols') || '[]');
-        protocols.push(protocolToStore);
-        localStorage.setItem('protocols', JSON.stringify(protocols));
-
         renderPDFPreview(protocol);
-        showAlert('success', '✅ Protokoll gespeichert und PDF generiert!', 'step4');
+        showAlert('success', '✅ PDF generiert!', 'step4');
     }
 
     function renderPDFPreview(protocol) {
@@ -1770,12 +1673,6 @@
         }, 100);
     }
 
-    function downloadProtocol(index) {
-        const protocols = JSON.parse(localStorage.getItem('protocols') || '[]');
-        const protocol = protocols[index];
-        renderPDFPreview(protocol);
-    }
-
     function closePDFModal() {
         document.getElementById('pdfModal').classList.remove('active');
         document.getElementById('pdfContent').innerHTML = '';
@@ -1801,13 +1698,6 @@
             resetProtocolState();
             showAlert('info', 'ℹ️ Bereit für neues Protokoll', 'step4');
         }
-    }
-
-    // "← Neues Protokoll" aus der Protokoll-Liste: Formular leeren und zu Schritt 1.
-    // Kein confirm nötig, da das vorherige Protokoll bereits gespeichert wurde.
-    function startNewProtocol() {
-        resetProtocolState();
-        goToStep(1);
     }
 
     function showAlert(type, message, containerId) {
