@@ -832,7 +832,7 @@
         <div class="section-title">📚 Gespeicherte Protokolle</div>
         <ul class="protocol-list" id="protocolList"></ul>
         <div class="action-buttons">
-            <button class="btn btn-secondary" onclick="goToStep(1)">← Neues Protokoll</button>
+            <button class="btn btn-secondary" onclick="startNewProtocol()">← Neues Protokoll</button>
         </div>
     </div>
 </div>
@@ -1782,14 +1782,32 @@
     }
 
     // ============= UTILITY FUNCTIONS =============
+    // Leert alle protokoll-spezifischen Eingaben, damit das nächste Protokoll
+    // sauber startet (Bemerkungen, Unterschriften, Checkliste UND Fotos).
+    function resetProtocolState() {
+        document.getElementById('remarks').value = '';
+        clearSignature('sigPruefer');
+        clearSignature('sigMieter');
+        document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+
+        // Fotos: sowohl die Daten (gehen ins PDF) als auch die Vorschau-Bilder
+        appState.fotos = {};
+        document.querySelectorAll('[id^="fotoPreview_"]').forEach(el => el.innerHTML = '');
+        updateFotoSection();
+    }
+
     function resetForm() {
         if (confirm('Neues Protokoll starten?')) {
-            document.getElementById('remarks').value = '';
-            clearSignature('sigPruefer');
-            clearSignature('sigMieter');
-            document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+            resetProtocolState();
             showAlert('info', 'ℹ️ Bereit für neues Protokoll', 'step4');
         }
+    }
+
+    // "← Neues Protokoll" aus der Protokoll-Liste: Formular leeren und zu Schritt 1.
+    // Kein confirm nötig, da das vorherige Protokoll bereits gespeichert wurde.
+    function startNewProtocol() {
+        resetProtocolState();
+        goToStep(1);
     }
 
     function showAlert(type, message, containerId) {
