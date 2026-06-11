@@ -728,6 +728,10 @@
                             <input type="radio" id="protocolType_OUT" name="protocolType" value="Auszugsprotokoll">
                             <label for="protocolType_OUT">Auszug</label>
                         </div>
+                        <div class="radio-btn">
+                            <input type="radio" id="protocolType_SNAP" name="protocolType" value="Momentaufnahme">
+                            <label for="protocolType_SNAP">Momentaufnahme</label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1105,6 +1109,30 @@
         });
     }
 
+    // Max. lange Kante 2560px ≈ 360 DPI auf 180mm PDF-Breite — Schäden bleiben
+    // im Detail erkennbar, aber 10-15 Fotos sprengen nicht mehr den Speicher.
+    const FOTO_MAX_DIM = 2560;
+    const FOTO_JPEG_QUALITY = 0.9;
+
+    function resizeImageDataUrl(dataUrl) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const scale = Math.min(1, FOTO_MAX_DIM / Math.max(img.width, img.height));
+                const width = Math.round(img.width * scale);
+                const height = Math.round(img.height * scale);
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                resolve({ data: canvas.toDataURL('image/jpeg', FOTO_JPEG_QUALITY), width, height });
+            };
+            img.onerror = () => reject(new Error('Bild konnte nicht geladen werden'));
+            img.src = dataUrl;
+        });
+    }
+
     function handleFotoUpload(e) {
         const files = e.target.files;
         if (!files || files.length === 0) return;
@@ -1121,11 +1149,22 @@
         Array.from(files).forEach((file, index) => {
             const reader = new FileReader();
 
-            reader.onload = (event) => {
+            reader.onload = async (event) => {
+                let resized;
+                try {
+                    resized = await resizeImageDataUrl(event.target.result);
+                } catch (err) {
+                    console.error('Foto-Fehler:', err);
+                    showAlert('error', '❌ Ein Foto konnte nicht verarbeitet werden!', 'step3');
+                    return;
+                }
+
                 const fotoId = `${itemId}_${Date.now()}_${index}`;
                 const fotoData = {
                     id: fotoId,
-                    data: event.target.result,
+                    data: resized.data,
+                    width: resized.width,
+                    height: resized.height,
                     timestamp: new Date().toLocaleString('de-DE')
                 };
 
@@ -1137,7 +1176,7 @@
                 fotoContainer.style.cssText = 'position: relative; display: inline-block;';
 
                 const img = document.createElement('img');
-                img.src = event.target.result;
+                img.src = resized.data;
                 img.style.maxWidth = '150px';
                 img.style.maxHeight = '120px';
                 img.style.borderRadius = '4px';
@@ -1257,11 +1296,12 @@
 
     function capturePhoto(itemId, video, canvas) {
         const ctx = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0);
+        const scale = Math.min(1, FOTO_MAX_DIM / Math.max(video.videoWidth, video.videoHeight));
+        canvas.width = Math.round(video.videoWidth * scale);
+        canvas.height = Math.round(video.videoHeight * scale);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        const imageData = canvas.toDataURL('image/jpeg', 0.95);
+        const imageData = canvas.toDataURL('image/jpeg', FOTO_JPEG_QUALITY);
 
         // Add to fotos
         if (!appState.fotos) appState.fotos = {};
@@ -1271,6 +1311,8 @@
         const fotoData = {
             id: fotoId,
             data: imageData,
+            width: canvas.width,
+            height: canvas.height,
             timestamp: new Date().toLocaleString('de-DE')
         };
 
@@ -1641,11 +1683,27 @@
                             pdf.setDrawColor(197, 211, 42);
                             pdf.line(margin, margin + 5, pageWidth - margin, margin + 5);
                             
-                            // Foto
+                            // Foto — proportional in die Seite einpassen (kein Verzerren)
                             const dataUrl = fotoObj.data || fotoObj;
                             try {
-                                pdf.addImage(dataUrl, 'JPEG', margin, margin + 15, pageWidth - 30, 200);
+                                const maxW = pageWidth - 2 * margin;            // 180mm
+                                const maxH = pageHeight - (margin + 15) - 22;   // bis kurz über den Footer
+
+                                let imgW = fotoObj.width;
+                                let imgH = fotoObj.height;
+                                if (!imgW || !imgH) {
+                                    const props = pdf.getImageProperties(dataUrl);
+                                    imgW = props.width;
+                                    imgH = props.height;
+                                }
+
+                                const fit = Math.min(maxW / imgW, maxH / imgH);
+                                const w = imgW * fit;
+                                const h = imgH * fit;
+                                const format = dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+                                pdf.addImage(dataUrl, format, (pageWidth - w) / 2, margin + 15, w, h);
                             } catch(e) {
+                                console.error('Foto-PDF-Fehler:', e);
                                 pdf.text('Foto konnte nicht eingefügt werden', pageWidth / 2, 100, { align: 'center' });
                             }
                             
