@@ -16,7 +16,7 @@ Die gesamte App (HTML + CSS + JavaScript) liegt in **einer einzigen Datei**: `in
 5. **Schritt 4:** Protokoll ausfüllen:
    - Protokolltyp: **Einzug / Auszug / Momentaufnahme** (Radio-Buttons, `name="protocolType"`)
    - Checkliste mit Zustandsbewertung (Neu/Gebraucht/Abgenutzt/Beschädigt …)
-   - Fotos pro Checklisten-Punkt (Datei-Upload oder Kamera)
+   - Fotos pro Checklisten-Punkt: **Upload** aus der Galerie oder **native Handy-Kamera** (der Kamera-Button öffnet via `capture="environment"` direkt die Kamera-App → volle Auflösung)
    - Bemerkungen
    - Zwei Unterschriften (Canvas: Prüfer/Vermieter und Mieter/Mitarbeiter)
    - PDF erzeugen und herunterladen
@@ -37,9 +37,9 @@ Die gesamte App (HTML + CSS + JavaScript) liegt in **einer einzigen Datei**: `in
 |---|---|
 | `handleExcelUpload()` | Excel parsen, Häuser/Zimmer extrahieren |
 | `goToStep(n)` | Navigation zwischen den 4 Schritten |
-| `resizeImageDataUrl(dataUrl)` | Foto auf max. 2560 px lange Kante skalieren, JPEG 90 % (Konstanten `FOTO_MAX_DIM`, `FOTO_JPEG_QUALITY`) |
-| `handleFotoUpload(e)` | Datei-Upload → FileReader → Kompression → `appState.fotos[itemId]` |
-| `startWebcam()` / `capturePhoto()` | Kamera-Modal, Aufnahme ebenfalls auf 2560 px / 90 % begrenzt |
+| `resizeImageDataUrl(dataUrl)` | Foto auf max. 3840 px lange Kante skalieren (High-Quality-Smoothing), JPEG 92 % (Konstanten `FOTO_MAX_DIM`, `FOTO_JPEG_QUALITY`) |
+| `handleFotoUpload(e)` | Datei-/Kamera-Input → FileReader → Kompression → `appState.fotos[itemId]` (beide Buttons laufen hierüber) |
+| „📷 Kamera"-Button | Öffnet die **native Handy-Kamera** (`<input … capture="environment">`) → volles Foto; frühere In-App-`getUserMedia`-Kamera wurde entfernt |
 | `deleteFoto(itemId, fotoId)` | Foto aus State und Vorschau entfernen |
 | `generatePDF()` | Protokoll-Objekt zusammenbauen, Validierung (beide Unterschriften Pflicht) |
 | `renderPDFPreview(protocol)` | PDF mit jsPDF zeichnen: Titel = Protokolltyp, Info-Tabelle, farbige Checkliste, Unterschriften, dann **ein Foto pro Seite** |
@@ -48,10 +48,10 @@ Die gesamte App (HTML + CSS + JavaScript) liegt in **einer einzigen Datei**: `in
 
 ## Foto-Handling (wichtig für Qualität!)
 
-- Fotos werden beim Erfassen auf **max. 2560 px lange Kante** skaliert und als **JPEG mit Qualität 0.90** gespeichert — das ergibt ≈ 360 DPI auf voller PDF-Seitenbreite (Schäden bleiben beim Zoomen scharf), hält aber den Speicher bei 10–15 Fotos stabil (~0,5–1,5 MB statt 4–8 MB pro Foto).
+- Fotos werden beim Erfassen auf **max. 3840 px lange Kante** (mit High-Quality-Smoothing) skaliert und als **JPEG mit Qualität 0.92** gespeichert — das ergibt ≈ 540 DPI auf voller PDF-Seitenbreite (Schäden bleiben auch beim Reinzoomen scharf). Pro Foto ~1,5–3 MB; bei 10–15 Fotos werden PDFs ~20–45 MB (Fotos liegen nur im RAM, kein `localStorage`).
 - Jedes Foto speichert `{id, data (Base64-JPEG), width, height, timestamp}` in `appState.fotos[itemId]`.
 - Im PDF wird jedes Foto **proportional eingepasst** (kein Verzerren), zentriert, eine A4-Seite pro Foto. `width`/`height` aus dem Foto-Objekt; Fallback: `pdf.getImageProperties()`.
-- **Anforderung:** Die Foto-Qualität im fertigen PDF muss immer sehr gut bleiben (Schäden im Detail erkennbar) — bei Änderungen an `FOTO_MAX_DIM`/`FOTO_JPEG_QUALITY` nicht unter diese Werte gehen.
+- **Anforderung:** Die Foto-Qualität im fertigen PDF muss immer sehr gut bleiben (Schäden im Detail erkennbar) — bei Änderungen an `FOTO_MAX_DIM`/`FOTO_JPEG_QUALITY` nicht unter **3840 px / 0.92** gehen. (Falls PDFs für Mailversand zu groß werden: bis ~3200 px / 0.90 vertretbar.)
 
 ## Bekannte Einschränkungen
 
