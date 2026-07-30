@@ -661,8 +661,8 @@
         <div id="dataEmpty" style="display: block;">
             <div class="upload-box">
                 <label for="excelFile" class="upload-label">📁 Excel-Datei auswählen</label>
-                <input type="file" id="excelFile" accept=".xlsx,.xls">
-                <div class="upload-info">Laden Sie Ihre aktuelle Belegungslisten-Excel hoch (z.B. Belegungslisten_Neu.xlsx)</div>
+                <input type="file" id="excelFile" accept=".xlsx,.xls,.xlsm">
+                <div class="upload-info">Laden Sie Ihre aktuelle Belegungslisten-Excel hoch (z.B. Belegungsliste.xlsm)</div>
             </div>
         </div>
         
@@ -836,7 +836,7 @@
                 appState.excelData = {};
                 
                 // Parse all sheets except Dashboard, Alle Betten, Stammdaten
-                const skipSheets = ['Dashboard', 'Alle Betten', 'Stammdaten'];
+                const skipSheets = ['Dashboard', 'Alle Betten', 'Verlauf', 'Stammdaten'];
                 workbook.SheetNames.forEach(sheetName => {
                     if (!skipSheets.includes(sheetName)) {
                         const worksheet = workbook.Sheets[sheetName];
@@ -871,7 +871,7 @@
             // and the next non-empty row is the "#"/Betttyp table header.
             // Works for "Zimmer", "Wohnung", "Appartement", "Zi", "EG/OG" usw.
             if (row[0] && typeof row[0] === 'string') {
-                const isEmpty = !row[1] && !row[2] && !row[3] && !row[4] && !row[5] && !row[6] && !row[7];
+                const isEmpty = !row[1] && !row[2] && !row[3] && !row[4] && !row[5] && !row[6] && !row[7] && !row[8];
                 if (isEmpty) {
                     // Look ahead to the next non-empty row
                     let j = i + 1;
@@ -905,15 +905,21 @@
                     checkInDate = checkInDate.toLocaleDateString('de-DE');
                 }
 
+                let contractStart = row[4] || '';
+                if (contractStart instanceof Date) {
+                    contractStart = contractStart.toLocaleDateString('de-DE');
+                }
+
                 currentRoom.beds.push({
                     number: row[0],
                     type: row[1] || 'Bett',
                     tenant: String(row[2]).trim(),
                     checkInDate: checkInDate,
-                    customer: row[4] || '',
-                    rent: row[5] || '',
-                    notes: row[6] || '',
-                    status: row[7] || 'Frei'
+                    contractStart: contractStart,
+                    customer: row[5] || '',
+                    rent: row[6] || '',
+                    notes: row[7] || '',
+                    status: row[8] || 'Frei'
                 });
             }
         }
